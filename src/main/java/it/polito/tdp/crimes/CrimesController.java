@@ -1,12 +1,16 @@
 /**
+ /**
  * Sample Skeleton for 'Crimes.fxml' Controller Class
  */
 
 package it.polito.tdp.crimes;
 
 import java.net.URL;
+import java.sql.Date;
+import java.util.List;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.crimes.model.Adiacenza;
 import it.polito.tdp.crimes.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -25,16 +29,16 @@ public class CrimesController {
     private URL location;
 
     @FXML // fx:id="boxCategoria"
-    private ComboBox<?> boxCategoria; // Value injected by FXMLLoader
+    private ComboBox<String> boxCategoria; // Value injected by FXMLLoader
 
-    @FXML // fx:id="boxAnno"
-    private ComboBox<?> boxAnno; // Value injected by FXMLLoader
+    @FXML // fx:id="boxGiorno"
+    private ComboBox<Integer> boxAnno; // Value injected by FXMLLoader
 
     @FXML // fx:id="btnAnalisi"
     private Button btnAnalisi; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxArco"
-    private ComboBox<?> boxArco; // Value injected by FXMLLoader
+    private ComboBox<Adiacenza> boxArco; // Value injected by FXMLLoader
 
     @FXML // fx:id="btnPercorso"
     private Button btnPercorso; // Value injected by FXMLLoader
@@ -44,20 +48,68 @@ public class CrimesController {
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
+    	
     	txtResult.clear();
-    	txtResult.appendText("Crea grafo...\n");
+    	  		
+    	Integer anno = this.boxAnno.getValue();
+    	String catID = this.boxCategoria.getValue();
+    	
+    	if(anno!=null && catID!=null) {
+    		
+    	model.creaGrafo(catID,anno);
+    		
+    	this.txtResult.setText("GRAFO CREATO\nVertici: " + model.numeroVertici() + "\nArchi: " + model.numeroArchi() + "\nArchi con peso massimo:\n");
+    		
+    	List<Adiacenza> archi = this.model.getArchi();
+    	
+    	for (Adiacenza a:archi) {
+    		txtResult.appendText(a.toString() + "\n");
+    	}
+    		
+    	this.boxArco.getItems().addAll(archi);
+    	
+    	this.boxArco.setDisable(false);
+    	this.btnPercorso.setDisable(false);
+    	
+    	} else {
+    		txtResult.setText("Selezionare i valori dalle apposite tendine!");
+    		return;
+    	}
+    		  	
     }
 
     @FXML
     void doCalcolaPercorso(ActionEvent event) {
+    	
     	txtResult.clear();
-    	txtResult.appendText("Calcola percorso...\n");
+
+    	Adiacenza a = this.boxArco.getValue();
+    		
+    	if (a!= null) {
+    		List <String> res = model.camminoMassimo(a);
+    		
+    		if (res.size()>0) {
+    		
+    		txtResult.appendText("Cammino trovato (peso = " + model.pesoCammino() + "):\n");
+    		for (String s:res) 
+    			txtResult.appendText(s + "\n");
+    		} else {
+    			txtResult.setText("Cammino non trovato.");
+    		}
+    		
+    		
+    		
+    	} else {
+    		txtResult.setText("Selezionare arco per il percorso");
+    		return;
+    	}
+
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
     void initialize() {
         assert boxCategoria != null : "fx:id=\"boxCategoria\" was not injected: check your FXML file 'Crimes.fxml'.";
-        assert boxAnno != null : "fx:id=\"boxAnno\" was not injected: check your FXML file 'Crimes.fxml'.";
+        assert boxAnno != null : "fx:id=\"boxGiorno\" was not injected: check your FXML file 'Crimes.fxml'.";
         assert btnAnalisi != null : "fx:id=\"btnAnalisi\" was not injected: check your FXML file 'Crimes.fxml'.";
         assert boxArco != null : "fx:id=\"boxArco\" was not injected: check your FXML file 'Crimes.fxml'.";
         assert btnPercorso != null : "fx:id=\"btnPercorso\" was not injected: check your FXML file 'Crimes.fxml'.";
@@ -67,5 +119,14 @@ public class CrimesController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	
+    	for (int i=2014;i<=2017;i++)
+    		this.boxAnno.getItems().add(i);
+    	
+    	
+    	this.boxCategoria.getItems().addAll(model.listAllCategories());
+    	
+    	this.boxArco.setDisable(true);
+    	this.btnPercorso.setDisable(true);
     }
 }
